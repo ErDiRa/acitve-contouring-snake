@@ -31,6 +31,9 @@ stepSize = 50;
 [xVals_opt, yVals_opt] = calcCirclePlotVals(optCircleVals(1), optCircleVals(2), optCircleVals(3),stepSize);
 plot(xVals_opt,yVals_opt,'g-')
 
+%TODO: use the snake model to minimize the energy of the snake while
+%changing the x and y values
+
 %% Smooth image and detect edges (inverted)
 % Smooth image and detect edges
 [potVal, image_edge] = imageForces(input);
@@ -73,11 +76,13 @@ function [optVals, R] = optimiseCircleParams(x0, y0, r, xData, yData)
     [optVals, R] = lsqnonlin(circle_fun, opt_params);
 end
 
-function [xVals, yVals] = calcCirclePlotVals(x0,y0,r, steps)
+% TODO: this is also the function which has to be derived C = (x(s), y(s))
+% what does not actually matter be cause we use numerical differentiation
+function [xVals, yVals] = calcCirclePlotVals(x0,y0, r, steps)
     %using parameter form
-    t = 0:pi/steps:2*pi;
+    s = 0:pi/steps:2*pi;
     
-    xVals = r * cos(t) + x0;
-    yVals = r * sin(t) + y0;
+    xVals = r * cos(s) + x0;
+    yVals = r * sin(s) + y0;
     
 end
