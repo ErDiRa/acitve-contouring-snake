@@ -1,4 +1,5 @@
 close all; clear all; clc
+%% Read input image
 I = dicomread('brain.dcm');
 
 input = convertGreyValsToInt8(I);
@@ -6,31 +7,32 @@ input = convertGreyValsToInt8(I);
 figure
 imshow(input), hold on
 
-%Create initial snake
+%% Create initial snake
 [x,y] = getline();
 [M,xpol,ypol] = roipoly(I,x,y);
 
 plot(xpol,ypol), hold on
 
+% estimate centerpoint and radius of given user input
 [xCenter,yCenter] = calcCenterOfPoints(xpol,ypol);
 plot(xCenter,yCenter,'r.'), hold on
 
 radius = estimateRadius(xCenter,yCenter,xpol,ypol);
 
-%Optimise circle function given the polygon input of user
-
+% Optimise circle function given the polygon input of user
 [optCircleVals, R] = optimiseCircleParams(xCenter,yCenter,radius,xpol,ypol);
 
-%plot optimized center point
+% plot optimized center point
 plot(optCircleVals(1), optCircleVals(2),'g*'), hold on
 
-%plot optimzed circel of user input
+% plot optimzed circel of user input
 stepSize = 50;
-%This are the initial values for the snake, estimated from the user input
+% This are the initial values for the snake, estimated from the user input
 [xVals_opt, yVals_opt] = calcCirclePlotVals(optCircleVals(1), optCircleVals(2), optCircleVals(3),stepSize);
 plot(xVals_opt,yVals_opt,'g-')
 
-%Smooth image and detect edges
+%% Smooth image and detect edges (inverted)
+% Smooth image and detect edges
 [potVal, image_edge] = imageForces(input);
 figure, imshow(uint8(image_edge),[])
 
