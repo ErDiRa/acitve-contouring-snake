@@ -37,7 +37,7 @@ plot(xVals_opt,yVals_opt,'g-')
 %% Smooth image and detect edges (inverted)
 % Smooth image and detect edges
 [potVal, image_edge] = imageForces(input);
-figure, imshow(uint8(image_edge),[])
+figure, imshow(image_edge)
 
 %% Functions
 function [xCenter,yCenter] = calcCenterOfPoints(xData,yData)
