@@ -4,7 +4,7 @@ I = dicomread('./data/ElasticRadExampleData/BrainX/20061201/IM-0001-0009.dcm');
 
 input = convertGreyValsToInt8(I);
 
-figure
+subplot(2,2,1)
 imshow(input)
 title('Original Image')
 %imtool(input)
@@ -15,26 +15,40 @@ title('Original Image')
 % 
 
 %Unsharpmasking
-alpha = 5;
+alpha = 10;
 input_sharpened = performSharpening(input,alpha);
 
-figure
+subplot(2,2,2)
 imshow(input_sharpened)
 title('Snake Input image sharpened')
 
-input_streched = performWindowing(input_sharpened,50,130,255);
+%Windowing
+gmin = 50;
+gmax = 120;
+maxPixelVal = 255;
+input_win = performWindowing(input_sharpened,gmin,gmax,maxPixelVal);
 % figure
 % imhist(input_streched,65)
 % title('Histogram streched')
+subplot(2,2,3)
+imshow(input_win)
+title_str = ['Snake Input image [',num2str(gmin),',',num2str(gmax),']'];
+title(title_str)
+
+%Medianfilter (reduce noise) (will preserve edges!!)
+input_medianFil = medfilt2(input_win);
+
+subplot(2,2,4)
+imshow(input_medianFil)
+title('Snake Input Image Median Filter')
+
 figure
-imshow(input_streched)
-title('Snake Input image streched')
-
-
+imshow(input_medianFil)
+title('Snake Input Image Median Filter')
 
 %% Create initial snake
 [x,y] = getline();
-[M,xpol,ypol] = roipoly(input_streched,x,y);
+[M,xpol,ypol] = roipoly(input_medianFil,x,y);
 
 hold on, plot(xpol,ypol)
 
@@ -61,7 +75,7 @@ plot(xVals_opt,yVals_opt,'g-')
 
 %% Smooth image and detect edges (inverted)
 % Smooth image and detect edges
-[potVal, image_edge] = imageForces(input_streched);
+[potVal, image_edge] = imageForces(input_medianFil);
 figure, imshow(image_edge)
 
 %% Functions
