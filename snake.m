@@ -1,17 +1,42 @@
 close all; clear all; clc
 %% Read input image
-I = dicomread('brain.dcm');
+I = dicomread('./data/ElasticRadExampleData/BrainX/20061201/IM-0001-0009.dcm');
 
 input = convertGreyValsToInt8(I);
 
 figure
-imshow(input), hold on
+imshow(input)
+title('Original Image')
+%imtool(input)
+
+%figure
+%imhist(input,65)
+%title('Histogram')
+% 
+
+%Unsharpmasking
+alpha = 5;
+input_sharpened = performSharpening(input,alpha);
+
+figure
+imshow(input_sharpened)
+title('Snake Input image sharpened')
+
+input_streched = performWindowing(input_sharpened,50,130,255);
+% figure
+% imhist(input_streched,65)
+% title('Histogram streched')
+figure
+imshow(input_streched)
+title('Snake Input image streched')
+
+
 
 %% Create initial snake
 [x,y] = getline();
-[M,xpol,ypol] = roipoly(I,x,y);
+[M,xpol,ypol] = roipoly(input_streched,x,y);
 
-plot(xpol,ypol), hold on
+hold on, plot(xpol,ypol)
 
 % estimate centerpoint and radius of given user input
 [xCenter,yCenter] = calcCenterOfPoints(xpol,ypol);
@@ -36,7 +61,7 @@ plot(xVals_opt,yVals_opt,'g-')
 
 %% Smooth image and detect edges (inverted)
 % Smooth image and detect edges
-[potVal, image_edge] = imageForces(input);
+[potVal, image_edge] = imageForces(input_streched);
 figure, imshow(image_edge)
 
 %% Functions
@@ -84,5 +109,42 @@ function [xVals, yVals] = calcCirclePlotVals(x0,y0, r, steps)
     
     xVals = r * cos(s) + x0;
     yVals = r * sin(s) + y0;
+    
+end
+
+function image_stretched = performWindowing(image,gmin,gmax,gmax_win)
+    % g < gmin --> f(g) = 0
+    % gmin < g < gmax -- f(g) = g'max * (g-gmin)/(gmax-gmin)
+    % g > gmax = 255
+ 
+    image = double(image);
+    [M,N] = size(image);
+    image_stretched = zeros(M,N);
+    
+    for i=1:M
+        for j=1:N
+            greyVal = image(i,j);
+            if greyVal < gmin
+                newGreyVal = 0;
+            elseif ((gmin <= greyVal) && (greyVal<= gmax))
+                newGreyVal = round(gmax_win * ((greyVal -gmin)/(gmax-gmin)));
+            elseif greyVal > gmax
+                newGreyVal = gmax_win;
+            end
+            image_stretched(i,j) = newGreyVal;
+        end
+        
+    end
+    
+    image_stretched = uint8(image_stretched);
+    
+end
+
+function image_sharpened = performSharpening(input_image,factor)
+    
+    sblurred = imgaussfilt(input_image);
+    sharpness = input_image - blurred;
+    
+    image_sharpened = input_image + factor * sharpness;
     
 end
