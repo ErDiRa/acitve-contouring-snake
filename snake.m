@@ -142,7 +142,7 @@ end
 
 function image_sharpened = performSharpening(input_image,factor)
     
-    sblurred = imgaussfilt(input_image);
+    blurred = imgaussfilt(input_image);
     sharpness = input_image - blurred;
     
     image_sharpened = input_image + factor * sharpness;
