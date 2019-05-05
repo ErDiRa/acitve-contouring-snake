@@ -2,8 +2,9 @@ close all; clear all; clc
 %% Read input image
 I = dicomread('./data/ElasticRadExampleData/BrainX/20061201/IM-0001-0009.dcm');
 
-input = convertGreyValsToInt8(I);
+input = imageOperators.convertGreyValsToInt8(I);
 
+figure(1)
 subplot(2,2,1)
 imshow(input)
 title('Original Image')
@@ -16,7 +17,7 @@ title('Original Image')
 
 %Unsharpmasking
 alpha = 10;
-input_sharpened = performSharpening(input,alpha);
+input_sharpened = imageOperators.performSharpening(input,alpha);
 
 subplot(2,2,2)
 imshow(input_sharpened)
@@ -26,28 +27,29 @@ title('Snake Input image sharpened')
 gmin = 50;
 gmax = 120;
 maxPixelVal = 255;
-input_win = performWindowing(input_sharpened,gmin,gmax,maxPixelVal);
+%input_eq = adapthisteq(input_sharpened); %Histogram equalisation CLAHE
+input_win = imageOperators.performWindowing(input_sharpened,gmin,gmax,maxPixelVal);
 % figure
-% imhist(input_streched,65)
-% title('Histogram streched')
+% imhist(input_win,65)
+% title('Histogram windowed')
 subplot(2,2,3)
 imshow(input_win)
 title_str = ['Snake Input image [',num2str(gmin),',',num2str(gmax),']'];
 title(title_str)
 
 %Medianfilter (reduce noise) (will preserve edges!!)
-input_medianFil = medfilt2(input_win);
+input_medianFil = imageOperators.medianFilter(input_win);
 
 subplot(2,2,4)
 imshow(input_medianFil)
 title('Snake Input Image Median Filter')
 
-figure
+fig2 = figure(2);
 imshow(input_medianFil)
 title('Snake Input Image Median Filter')
 
 %% Create initial snake
-[x,y] = getline();
+[x,y] = getline(fig2);
 [M,xpol,ypol] = roipoly(input_medianFil,x,y);
 
 hold on, plot(xpol,ypol)
@@ -75,8 +77,8 @@ plot(xVals_opt,yVals_opt,'g-')
 
 %% Smooth image and detect edges (inverted)
 % Smooth image and detect edges
-[potVal, image_edge] = imageForces(input_medianFil);
-figure, imshow(image_edge)
+[potVal, image_edge] = snakeModel.imageForces(input_medianFil);
+figure(4), imshow(image_edge)
 
 %% Functions
 function [xCenter,yCenter] = calcCenterOfPoints(xData,yData)
@@ -126,39 +128,3 @@ function [xVals, yVals] = calcCirclePlotVals(x0,y0, r, steps)
     
 end
 
-function image_stretched = performWindowing(image,gmin,gmax,gmax_win)
-    % g < gmin --> f(g) = 0
-    % gmin < g < gmax -- f(g) = g'max * (g-gmin)/(gmax-gmin)
-    % g > gmax = 255
- 
-    image = double(image);
-    [M,N] = size(image);
-    image_stretched = zeros(M,N);
-    
-    for i=1:M
-        for j=1:N
-            greyVal = image(i,j);
-            if greyVal < gmin
-                newGreyVal = 0;
-            elseif ((gmin <= greyVal) && (greyVal<= gmax))
-                newGreyVal = round(gmax_win * ((greyVal -gmin)/(gmax-gmin)));
-            elseif greyVal > gmax
-                newGreyVal = gmax_win;
-            end
-            image_stretched(i,j) = newGreyVal;
-        end
-        
-    end
-    
-    image_stretched = uint8(image_stretched);
-    
-end
-
-function image_sharpened = performSharpening(input_image,factor)
-    
-    blurred = imgaussfilt(input_image);
-    sharpness = input_image - blurred;
-    
-    image_sharpened = input_image + factor * sharpness;
-    
-end
