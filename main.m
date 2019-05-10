@@ -1,8 +1,12 @@
 close all; clear all; clc
 
 %%Constants
+%Image operations
+alphaUnsharp = 10;
+
+%snake model
 alpha = 1.0;
-beta = 2.0;
+beta = 1.0;
 gamma = 1.0;
     
 %% Read input image
@@ -21,8 +25,8 @@ title('Original Image')
 % 
 
 %Unsharpmasking
-alpha = 10;
-input_sharpened = imageOperators.performSharpening(input,alpha);
+
+input_sharpened = imageOperators.performSharpening(input,alphaUnsharp);
 
 subplot(2,2,2)
 imshow(input_sharpened)

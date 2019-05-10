@@ -8,7 +8,7 @@ input_grey = imageOperators.convertToGrey(input_img);
 subplot(3,3,2)
 imshow(input_grey)
 
-thres = 160;
+thres = 200;
 input_thres = imageOperators.performThresholding(input_grey,thres);
 subplot(3,3,3)
 imshow(input_thres)
