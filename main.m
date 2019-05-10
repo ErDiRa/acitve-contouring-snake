@@ -1,7 +1,12 @@
 close all; clear all; clc
+
+%%Constants
+alpha = 1.0;
+beta = 2.0;
+gamma = 1.0;
+    
 %% Read input image
 I = dicomread('./data/ElasticRadExampleData/BrainX/20061201/IM-0001-0009.dcm');
-
 input = imageOperators.convertGreyValsToInt8(I);
 
 figure(1)
@@ -72,13 +77,15 @@ stepSize = 50;
 [xVals_opt, yVals_opt] = calcCirclePlotVals(optCircleVals(1), optCircleVals(2), optCircleVals(3),stepSize);
 plot(xVals_opt,yVals_opt,'g-')
 
-%TODO: use the snake model to minimize the energy of the snake while
-%changing the x and y values
+%% Initialize snake model
+snake = snakeModel.create(alpha,beta,gamma,xVals_opt,yVals_opt);
 
 %% Smooth image and detect edges (inverted)
 % Smooth image and detect edges
-[potVal, image_edge] = snakeModel.imageForces(input_medianFil);
+image_edge = snake.prepareEdgeImage(input_medianFil);
 figure(4), imshow(image_edge)
+
+tension = snake.calcTension();
 
 %% Functions
 function [xCenter,yCenter] = calcCenterOfPoints(xData,yData)
@@ -123,8 +130,8 @@ function [xVals, yVals] = calcCirclePlotVals(x0,y0, r, steps)
     %using parameter form
     s = 0:pi/steps:2*pi;
     
-    xVals = r * cos(s) + x0;
-    yVals = r * sin(s) + y0;
+    xVals = round(r * cos(s) + x0);
+    yVals = round(r * sin(s) + y0);
     
 end
 
