@@ -1,12 +1,27 @@
 classdef snakeModel
-
+    
+    properties
+        alpha
+        beta
+        gamma
+        xVals
+        yVals
+        energyVal
+    end
     
     methods(Static)
-        function [potVal,image] = imageForces(imageData)
-                %IMAGEFORCES draws Potential towards an edge of image
-                 %   edge detection: x -> x + ddI(x) + dI(x)
-
-            %% Blurring
+        
+        function snake = create(alpha,beta,gamma,xVals,yVals)
+            snake = snakeModel;
+            snake.alpha = alpha;
+            snake.beta = beta;
+            snake.gamma = gamma;
+            snake.xVals = xVals;
+            snake.yVals = yVals;
+         end
+        
+        function edgeImage = prepareEdgeImage(imageData)
+             %% Blurring
             %blurred_Image = imageOperators.gaussianFilter(imageData);
             blurred_Image = imageOperators.anisotropicFilter(imageData);
             figure(3)
@@ -32,15 +47,17 @@ classdef snakeModel
             title('canny filtered')
 
             %% Inverting
-            image = imcomplement(edge_Image); %if snake hits an edge potential gets zero
+            edgeImage = imcomplement(edge_Image); %if snake hits an edge potential gets zero
             subplot(2,3,4)
-            imshow(image)
+            imshow(edgeImage)
             title('inverted Image')
-
-            potVal = norm(double(image)); %I think this must be the potvalue of the snake and not the image
-
         end
         
+        function imageEnergy = imageForces(dataset,edgeImage)
+          
+        end
+        
+       
         function [xData,yData] = internalForces(xData,yData,alpha, beta)
             %INTERNALFORCES calculation of tension and stiffness
             %   calculate first and second derivative of snake function (C)
@@ -59,6 +76,26 @@ classdef snakeModel
 
         end
 
+    end
+    
+    methods
+        
+         
+        
+         function tension = calcTension(this)
+            %ToDO: i need a total tension and a tension for each point
+            x_diff = diff(this.xVals)';
+            y_diff = diff(this.yVals)';
+            norm_XY_Diff = sqrt(x_diff.^2 + y_diff.^2); %ToDO: something wrong
+            
+            tension = this.alpha * sum(norm_XY_Diff);
+         
+         end
+         
+         function stiffness = calcStiffness(this)
+            stiffness = 0;
+         end
+        
     end
 end
 
