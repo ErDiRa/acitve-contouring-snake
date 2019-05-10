@@ -15,7 +15,6 @@ classdef imageOperators
 
         function res = cannyFilter(imageData)
              res = edge(imageData,'canny');
-             %res = gaussianFilter(canny);
         end
 
         function res = detectEdgesLaplace(imageData)
@@ -27,7 +26,7 @@ classdef imageOperators
         end
 
         function res = detectEdgesXY(imageData)
-            hx = [-1,0,1]; %instead of filtering try blurring the image again to get wider edges
+            hx = [-1,0,1];
             hy = hx';
             filterMask = hy*hx;
             edgeImage = conv2(imageData,filterMask);
@@ -48,7 +47,7 @@ classdef imageOperators
             alpha= 1/3;beta = 1/3;gamma = 1/3;
             [height,width,depth] = size(image);
             output = zeros(height,width);
-            output = alpha * image(:,:,1) +  beta * image(:,:,1) + gamma * image(:,:,1);
+            output = alpha * image(:,:,1) +  beta * image(:,:,2) + gamma * image(:,:,3);
         end
 
         function output = performThresholding(image, threshold)
