@@ -6,8 +6,8 @@ alphaUnsharp = 10;
 
 %snake model
 alpha = 1.0;
-beta = 1.0;
-gamma = -1.0;
+beta = 0.5;
+gamma = 0.0;
     
 %% Read input image
 I = dicomread('./data/ElasticRadExampleData/BrainX/20061201/IM-0001-0009.dcm');
@@ -82,14 +82,46 @@ stepSize = 50;
 plot(xVals_opt,yVals_opt,'g-')
 
 %% Initialize snake model
-snake = snakeModel.create(alpha,beta,gamma,xVals_opt,yVals_opt);
+snake = snakeModel.create(alpha,beta,gamma,yVals_opt,xVals_opt, input_medianFil);
 
-%% Smooth image and detect edges (inverted)
-% Smooth image and detect edges
-image_edge = snake.prepareEdgeImage(input_medianFil);
-figure(4), imshow(image_edge)
+figure(4), imshow(snake.edgeImage)
 
-tension = snake.calcTension();
+
+figure(5)
+plot3(xVals_opt, yVals_opt, snake.energyValsInit)
+
+
+
+initEnergy = snake.totalEnergyInit;
+%[snake,gradMag] = snake.minimizeEnergy(0.5);
+iterationsteps = 500;
+snakeEnergies = zeros(1,iterationsteps);
+for i = 1:iterationsteps
+    snake = snake.minimizeEnergy(0.1);
+    snakeEnergies(i) = snake.totalEnergy;
+    figure(fig2)
+    if mod(i,2) ~= 0
+        color = 'r.';
+    else
+        color = 'b.';
+    end
+    plot(snake.yVals,snake.xVals, color)
+end
+endEnergy = snake.totalEnergy;
+figure(7)
+plot(1:iterationsteps,snakeEnergies)
+%figure(7)
+%plot(1:100,snakeEnergies)
+
+%GradMagnitude of edge image
+%figure(6)
+%imshow(gradMag, [])
+
+figure(fig2)
+plot(snake.yVals,snake.xVals, 'r.')
+
+
+
 
 
 

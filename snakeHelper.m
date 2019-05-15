@@ -3,7 +3,7 @@ classdef snakeHelper
    
     methods(Static)
         
-        function [xVals, yVals,xCenter,yCenter] = calcInitialSnakeVals(xpol,ypol,stepSize)
+        function [xVals, yVals,radiusSnake,xCenter,yCenter] = calcInitialSnakeVals(xpol,ypol,stepSize)
             % estimate centerpoint and radius of given user input
             [xCenterPol,yCenterPol] = snakeHelper.calcCenterOfPoints(xpol,ypol);
 
@@ -15,6 +15,7 @@ classdef snakeHelper
             % optimized center point
             xCenter = optCircleVals(1);
             yCenter = optCircleVals(2);
+            radiusSnake = optCircleVals(3);
       
             % This are the initial values for the snake, estimated from the user input
             [xVals, yVals] = snakeHelper.calcCirclePlotVals(optCircleVals(1), optCircleVals(2), optCircleVals(3),stepSize);
