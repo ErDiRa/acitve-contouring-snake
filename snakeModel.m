@@ -6,8 +6,6 @@ classdef snakeModel
         gamma
         finalXVals
         finalYVals
-        xValsInit
-        yValsInit
         xVals
         yVals
         energyVals
@@ -27,11 +25,11 @@ classdef snakeModel
             snake.gamma = gamma;
             snake.xVals = xVals;
             snake.yVals = yVals;
-            snake.xValsInit = xVals;
-            snake.yValsInit = yVals;
             snake.edgeImage = snakeModel.prepareEdgeImage(imageData);
-            [~,~,snake.energyValsInit, snake.totalEnergyInit ] = snakeModel.calcEnergyVals(xVals,yVals,xVals,yVals,snake.edgeImage,...
-            snake.alpha,snake.beta,snake.gamma);
+            [snake.energyValsInit, snake.totalEnergyInit ] = ...
+                snakeModel.calcInitEnergyVals(xVals,yVals,snake.edgeImage, snake.alpha,snake.beta,snake.gamma);
+            snake.totalEnergy = snake.totalEnergyInit;
+            snake.energyVals = snake.energyValsInit;
         end
         
     end
@@ -58,15 +56,16 @@ classdef snakeModel
             subplot(2,3,3)
             imshow(edge_Image)
             title('final edge detection (1.2nd Order xy, 2.1st Order xy')
-
-%             canny_Image = imageOperators.cannyFilter(blurred_Image);
-%             subplot(2,3,5)
-%             imshow(canny_Image)
-%             title('canny filtered')
+% 
+             canny_Image = imageOperators.cannyFilter(blurred_Image);
+             canny_Image_blurred = imageOperators.anisotropicFilter(canny_Image);
+             subplot(2,3,5)
+             imshow(canny_Image)
+             title('canny filtered')
 
             %% Inverting
             %edgeImage = imcomplement(edge_Image);%if snake hits an edge potential gets zero
-            edgeImage = edge_Image;
+            edgeImage = canny_Image_blurred;
             subplot(2,3,4)
             imshow(edgeImage)
             title('edge Image')
@@ -80,8 +79,8 @@ classdef snakeModel
             for i=1:length(xVals)
                 xpos = round(xVals(i));
                 ypos = round(yVals(i));
-                gradMagValues(i) = gradMag(xpos,ypos);
-                gradMagDirection = gradMagDir(xpos,ypos);
+                gradMagValues(i) = gradMag(ypos,xpos);
+                gradMagDirection = gradMagDir(ypos,xpos);
             end
             
             gradMag = uint8(gradMag);
@@ -123,7 +122,6 @@ classdef snakeModel
          end
          
         function [fourthDerivX, fourthDerivY] = calcFourthDerivative(xVals,yVals)
-             %ToDO do not forget h
              n = length(xVals);
              fourthDerivX = zeros(1,n);
              fourthDerivY = zeros(1,n);
@@ -264,7 +262,7 @@ classdef snakeModel
                 xpos = round(xVals(i));
                 ypos = round(yVals(i));
                 
-                imageEnergyVals(i) = double((edgeImage(xpos,ypos)))^2;
+                imageEnergyVals(i) = double((edgeImage(ypos,xpos)))^2;
             end
             
             imageEnergyTotal = sum(imageEnergyVals);
@@ -285,32 +283,56 @@ classdef snakeModel
             
         end
         
-        function [newXVals,newYVals,energyVals,totalEnergy] = calcEnergyVals(xVals,yVals,oldXVals,oldYVals,edgeImage,alpha,beta,gamma)
+        function [energyVals,totalEnergy] = calcInitEnergyVals(xVals,yVals,edgeImage,alpha,beta,gamma)
              
-             [tensionValsNew, tensionTotalNew] = snakeModel.calcTension(xVals,yVals);
+             [tensionValsNew, ~] = snakeModel.calcTension(xVals,yVals);
+  
+             n = length(tensionValsNew(1,:));
+             
+             [stiffnessValsNew, ~] = snakeModel.calcStiffness(xVals, yVals);
+             
+             [edgePotentialsNew,~] = snakeModel.calcImageForces(xVals,yVals,edgeImage);
+             
+             energyVals = zeros(1,n);
+             totalEnergy = 0;
+             for i=1:n
+                 energyVals(i) = (alpha/2)*tensionValsNew(i) + (beta/2)*stiffnessValsNew(i) + (gamma/2)*edgePotentialsNew(i);
+             end
+             
+         end
+        
+        function [newXVals,newYVals,energyVals,totalEnergy] = calcEnergyVals(xVals,yVals,oldXVals,oldYVals,...
+                totalEnergySnake,oldEnergyVals,edgeImage,alpha,beta,gamma)
+             
+             [tensionValsNew, ~] = snakeModel.calcTension(xVals,yVals);
              [tensionValsOld, ~] = snakeModel.calcTension(oldXVals,oldYVals);
              n = length(tensionValsNew(1,:));
              newXVals = zeros(1,n);
              newYVals = zeros(1,n);
              
-             [stiffnessValsNew, stiffnessTotalNew] = snakeModel.calcStiffness(xVals, yVals);
+             [stiffnessValsNew, ~] = snakeModel.calcStiffness(xVals, yVals);
              [stiffnessValsOld, ~] = snakeModel.calcStiffness(oldXVals, oldYVals);
              
-             [edgePotentialsNew,edgePotentialTotalNew] = snakeModel.calcImageForces(xVals,yVals,edgeImage);
+             [edgePotentialsNew,~] = snakeModel.calcImageForces(xVals,yVals,edgeImage);
              [edgePotentialsOld,~] = snakeModel.calcImageForces(oldXVals,oldYVals,edgeImage);
              
-             energyVals = zeros(1,n);
+             energyVals = oldEnergyVals;
              totalEnergy = 0;
              for i=1:n
-           
- %                energyVals(i) = (alpha/2)*tensionValsNew(i) + (beta/2)*stiffnessValsNew(i) + (gamma/2)*edgePotentialsNew(i);
                  energyValNew = (alpha/2)*tensionValsNew(i) + (beta/2)*stiffnessValsNew(i) + (gamma/2)*edgePotentialsNew(i);
                  energyValOld = (alpha/2)*tensionValsOld(i) + (beta/2)*stiffnessValsOld(i) + (gamma/2)*edgePotentialsOld(i);
-                 if energyValNew < energyValOld
+                 
+                 if (energyValNew < energyValOld) 
                      energyVals(i) = energyValNew;
-                     newXVals(i) = xVals(i);
-                     newYVals(i) = yVals(i);
-                     totalEnergy = totalEnergy + energyValNew;
+                     if sum(energyVals) < sum(oldEnergyVals) % remove this, because when value is smaller its sum is also smaller
+                         newXVals(i) = xVals(i);
+                         newYVals(i) = yVals(i);
+                     else
+                         energyVals(i) = energyValOld;
+                         newXVals(i) = oldXVals(i);
+                         newYVals(i) = oldYVals(i);
+                     end
+                      totalEnergy = totalEnergy + energyValNew;
                  else
                      energyVals(i) = energyValOld;
                      newXVals(i) = oldXVals(i);
@@ -318,8 +340,6 @@ classdef snakeModel
                      totalEnergy = totalEnergy + energyValOld;
                  end
              end
-            
- %           totalEnergy = (alpha/2)*tensionTotalNew + (beta/2)*stiffnessTotalNew + (gamma/2)*edgePotentialTotalNew;
              
          end
         
@@ -355,28 +375,6 @@ classdef snakeModel
                 
             end
         end
-        
-%         function [xInRange, yInRange] = withinRange(newValX,newValY, initXVals, initYVals, start, endIdx)
-%             n = length(initXVals);
-%             xMin = initXVals(start);
-%             xMax= initXVals(endIdx); 
-%             yMin = initYVals(start);
-%             yMax = initYVals(endIdx);
-%            
-%             
-%             if newValX < xMax && newValX > xMin
-%                 xInRange = true;
-%             else
-%                 xInRange = false;
-%             end
-%             
-%             if newValY < yMax && newValY > yMin
-%                 yInRange = true;
-%             else
-%                 yInRange = false;
-%             end
-%             
-%         end
        
         
     end
@@ -411,24 +409,19 @@ classdef snakeModel
                     fourthDerivX,fourthDerivY,imageGradVals, this.alpha, this.beta, this.gamma);  
              
              [newXVals,newYVals] = snakeModel.calcNewXYVals(this.xVals,this.yVals, gradientEnergyX,gradientEnergyY,stepSize);
-             [newXVals,newYVals,~,totalEnergyTmp] = snakeModel.calcEnergyVals(newXVals,newYVals,this.xVals,this.yVals,this.edgeImage,this.alpha,this.beta,this.gamma);
+             [newXVals,newYVals,newEnergyVals,totalEnergyTmp] = snakeModel.calcEnergyVals(newXVals,newYVals,this.xVals,this.yVals,...
+                 this.totalEnergy,this.energyVals,this.edgeImage,this.alpha,this.beta,this.gamma);
             
-             if isempty(this.totalEnergy)
-                 this.totalEnergy = this.totalEnergyInit;
-             end
-             
-             if totalEnergyTmp <= this.totalEnergy
+             this.totalEnergy = totalEnergyTmp;
+             this.energyVals = newEnergyVals;
+             if totalEnergyTmp < this.totalEnergy
                  this.totalEnergy = totalEnergyTmp;
                  this.finalXVals = newXVals;
                  this.finalYVals = newYVals;
              end
-             %this.totalEnergy = totalEnergyTmp;
+             
              this.xVals = newXVals;
-             this.yVals = newYVals;
-             
-        
-            
-             
+             this.yVals = newYVals;  
              
          end
         

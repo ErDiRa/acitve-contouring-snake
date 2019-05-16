@@ -10,6 +10,7 @@ classdef imageOperators
         end
         
         function res = anisotropicFilter(imageData)
+            imageData = double(imageData);
             res = imdiffusefilt(imageData);
         end
 

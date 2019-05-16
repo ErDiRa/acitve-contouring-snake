@@ -7,8 +7,8 @@ stepSize = 25;
 
 %snake model
 alpha = 0.5;
-beta = 0.1;
-gamma = 0.2;
+beta = 0.0002;
+gamma = -100;
 
 %% Input
 input_img = imread('data/simpleObjects.jpg');
@@ -52,12 +52,11 @@ plot3(xVals_opt, yVals_opt, snake.energyValsInit)
 
 
 initEnergy = snake.totalEnergyInit;
-%[snake,gradMag] = snake.minimizeEnergy(0.5);
-iterationsteps = 200;
+iterationsteps = 500;
 snakeEnergies = zeros(1,iterationsteps);
 for i=1:iterationsteps
     
-    snake = snake.minimizeEnergy(0.5);
+    snake = snake.minimizeEnergy(0.2);
     snakeEnergies(i) = snake.totalEnergy;
     figure(fig2)
     
@@ -71,16 +70,9 @@ for i=1:iterationsteps
     xVal = snake.xVals;
     yVal = snake.yVals;
    
-    plot(xValFinal,yValFinal, color)
+    plot(xVal,yVal, color)
  
 end
 endEnergy = snake.totalEnergy;
 figure(7)
 plot(1:iterationsteps,snakeEnergies)
-
-%GradMagnitude of edge image
-%figure(6)
-%imshow(gradMag, [])
-
-%figure(fig2)
-%plot(snake.yVals,snake.xVals, 'r.')

@@ -82,8 +82,8 @@ stepSize = 50;
 plot(xVals_opt,yVals_opt,'g-')
 
 %% Initialize snake model
-snake = snakeModel.create(alpha,beta,gamma,yVals_opt,xVals_opt, input_medianFil);
-
+snake = snakeModel.create(alpha,beta,gamma,xVals_opt,yVals_opt, input_medianFil);
+image = snake.edgeImage;
 figure(4), imshow(snake.edgeImage)
 
 
@@ -91,34 +91,33 @@ figure(5)
 plot3(xVals_opt, yVals_opt, snake.energyValsInit)
 
 
-
 initEnergy = snake.totalEnergyInit;
-%[snake,gradMag] = snake.minimizeEnergy(0.5);
+%[snake,gradMag] = snake.minimizeEnergy();
 iterationsteps = 500;
 snakeEnergies = zeros(1,iterationsteps);
-for i = 1:iterationsteps
-    snake = snake.minimizeEnergy(0.1);
+for i=1:iterationsteps
+    
+    snake = snake.minimizeEnergy(0.2);
     snakeEnergies(i) = snake.totalEnergy;
     figure(fig2)
+    
     if mod(i,2) ~= 0
         color = 'r.';
     else
         color = 'b.';
     end
-    plot(snake.yVals,snake.xVals, color)
+    xValFinal = snake.finalXVals;
+    yValFinal = snake.finalYVals;
+    xVal = snake.xVals;
+    yVal = snake.yVals;
+   
+    plot(xVal,yVal, color)
+ 
 end
 endEnergy = snake.totalEnergy;
 figure(7)
 plot(1:iterationsteps,snakeEnergies)
-%figure(7)
-%plot(1:100,snakeEnergies)
 
-%GradMagnitude of edge image
-%figure(6)
-%imshow(gradMag, [])
-
-figure(fig2)
-plot(snake.yVals,snake.xVals, 'r.')
 
 
 
