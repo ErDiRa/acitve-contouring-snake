@@ -42,12 +42,18 @@ hold on,plot(xCenter, yCenter,'g*')
 % This are the initial values for the snake, estimated from the user input
 hold on, plot(xVals_opt,yVals_opt,'g-')
 %% Initialize snake model
+% !! xVals are the columns and yVals are the rows in the image!!!
 snake = snakeModel.create(alpha,beta,gamma,xVals_opt,yVals_opt, input_med);
 image = snake.edgeImage;
+[rows,columns] = size(input_med);
 figure(4), imshow(snake.edgeImage)
 
+snakeEnergImg = snake.energyImage;
 
 figure(5)
+mesh(1:columns,1:rows,snakeEnergImg)
+
+figure(6)
 plot3(xVals_opt, yVals_opt, snake.energyValsInit)
 
 

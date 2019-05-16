@@ -13,6 +13,7 @@ classdef snakeModel
         energyValsInit
         totalEnergyInit
         edgeImage
+        energyImage
         
     end
     
@@ -30,6 +31,7 @@ classdef snakeModel
                 snakeModel.calcInitEnergyVals(xVals,yVals,snake.edgeImage, snake.alpha,snake.beta,snake.gamma);
             snake.totalEnergy = snake.totalEnergyInit;
             snake.energyVals = snake.energyValsInit;
+            snake.energyImage = snakeModel.calcEnergyValsOfImage(imageData,snake.edgeImage);
         end
         
     end
@@ -376,6 +378,17 @@ classdef snakeModel
             end
         end
        
+        function energyVals = calcEnergyValsOfImage(imageData,edgeImage)
+            [rows,columns] = size(imageData);
+            energyVals = zeros(rows,columns);
+            for i=1:rows
+                for j=1:columns
+                    energyVals(i,j) = double((edgeImage(i,j)))^2;
+                end
+            end
+            
+            
+        end
         
     end
     
