@@ -15,13 +15,13 @@ useSobel = true; %for CannyFilter set to false
 thresHoldVal = 150; %for sobel Filter
 
 %% Input
-%input_img = imread('data/simpleObjects.jpg');
+input_img = imread('data/simpleObjects.jpg');
 %input_img = imread('tire.tif');
 %input_img = imread('eight.tif');
 %input_img = imread('AT3_1m4_07.tif'); %use the sobel filter; threshold:100
 %input_img = imread('hands1.jpg');
 %input_img = imread('toyobjects.png');
-input_img = imread('pillsetc.png'); %sobel filter; threshold:150 --> good example
+%input_img = imread('pillsetc.png'); %sobel filter; threshold:150 --> good example
 subplot(3,3,1)
 imshow(input_img)
 

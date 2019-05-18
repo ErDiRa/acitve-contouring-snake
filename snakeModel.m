@@ -80,7 +80,6 @@ classdef snakeModel
             gradMagValues = zeros(1,length(xVals));
             gradMagDirection = zeros(1, length(yVals));
             for i=1:length(xVals)
-               
                 xpos = round(xVals(i));
                 ypos = round(yVals(i));
                 gradMagValues(i) = gradMag(ypos,xpos);
@@ -337,7 +336,7 @@ classdef snakeModel
                      energyVals(i) = energyValOld;
                      newXVals(i) = oldXVals(i);
                      newYVals(i) = oldYVals(i);
-                    % totalEnergy = totalEnergy + energyValOld;
+                     totalEnergy = totalEnergy + energyValOld;
                  end
              end
              
