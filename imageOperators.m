@@ -57,9 +57,9 @@ classdef imageOperators
             for i=1:height
                 for j = 1: width
                     if image(i,j) > threshold
-                      output(i,j) = 0;
+                      output(i,j) = 255;
                     else
-                        output(i,j) = 255;
+                        output(i,j) = 0;
                     end
                 end
             end
