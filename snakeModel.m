@@ -44,7 +44,7 @@ classdef snakeModel
             blurred_Image = imageOperators.anisotropicFilter(imageData);
             figure(3)
             subplot(2,3,1)
-            imshow(blurred_Image)
+            imshow(blurred_Image,[])
             title("Blurred Image")
 
             %% Edge Detection
@@ -61,16 +61,16 @@ classdef snakeModel
 % 
              canny_Image = imageOperators.cannyFilter(blurred_Image);
              canny_Image_blurred = imageOperators.anisotropicFilter(canny_Image);
-             subplot(2,3,5)
+             subplot(2,3,4)
              imshow(canny_Image)
              title('canny filtered')
 
             %% Inverting
             %edgeImage = imcomplement(edge_Image);%if snake hits an edge potential gets zero
             edgeImage = canny_Image_blurred;
-            subplot(2,3,4)
+            subplot(2,3,5)
             imshow(edgeImage)
-            title('edge Image')
+            title('final edge Image after blurring')
             %TODO: the edge image are forces maybe try to visualize that
          end 
         
@@ -326,20 +326,14 @@ classdef snakeModel
                  
                  if (energyValNew < energyValOld) 
                      energyVals(i) = energyValNew;
-                     if sum(energyVals) < sum(oldEnergyVals) % remove this, because when value is smaller its sum is also smaller
-                         newXVals(i) = xVals(i);
-                         newYVals(i) = yVals(i);
-                     else
-                         energyVals(i) = energyValOld;
-                         newXVals(i) = oldXVals(i);
-                         newYVals(i) = oldYVals(i);
-                     end
-                      totalEnergy = totalEnergy + energyValNew;
+                     newXVals(i) = xVals(i);
+                     newYVals(i) = yVals(i);
+                     totalEnergy = totalEnergy + energyValNew;
                  else
                      energyVals(i) = energyValOld;
                      newXVals(i) = oldXVals(i);
                      newYVals(i) = oldYVals(i);
-                     totalEnergy = totalEnergy + energyValOld;
+                    % totalEnergy = totalEnergy + energyValOld;
                  end
              end
              

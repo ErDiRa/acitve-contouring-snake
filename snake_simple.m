@@ -6,8 +6,8 @@ alphaUnsharp = 10;
 stepSize = 25;
 
 %snake model
-alpha = 0.5;
-beta = 0.0002;
+alpha = 1.0;
+beta = 0.2;
 gamma = -100;
 
 %% Input
