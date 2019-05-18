@@ -6,8 +6,12 @@ alphaUnsharp = 10;
 
 %snake model
 alpha = 1.0;
-beta = 0.5;
-gamma = 0.0;
+beta = 0.00002;
+gamma = -10;
+
+%EdgeDetection
+useSobel = true; %for CannyFilter set to false
+thresHoldVal = 220; %for sobel Filter
     
 %% Read input image
 I = dicomread('./data/ElasticRadExampleData/BrainX/20061201/IM-0001-0009.dcm');
@@ -82,36 +86,41 @@ stepSize = 50;
 plot(xVals_opt,yVals_opt,'g-')
 
 %% Initialize snake model
-snake = snakeModel.create(alpha,beta,gamma,xVals_opt,yVals_opt, input_medianFil);
+% !! xVals are the columns and yVals are the rows in the image!!!
+snake = snakeModel.create(alpha,beta,gamma,xVals_opt,yVals_opt, input_medianFil,useSobel,thresHoldVal);
 image = snake.edgeImage;
+[rows,columns] = size(input_medianFil);
 figure(4), imshow(snake.edgeImage)
 
+snakeEnergImg = snake.energyImage;
 
 figure(5)
+mesh(1:columns,1:rows,snakeEnergImg)
+
+figure(6)
 plot3(xVals_opt, yVals_opt, snake.energyValsInit)
 
 
 initEnergy = snake.totalEnergyInit;
-%[snake,gradMag] = snake.minimizeEnergy();
 iterationsteps = 500;
 snakeEnergies = zeros(1,iterationsteps);
+figure(fig2)
+color = 'b-';
+snakeCont = plot(snake.xVals,snake.yVals, color);
 for i=1:iterationsteps
     
     snake = snake.minimizeEnergy(0.2);
     snakeEnergies(i) = snake.totalEnergy;
-    figure(fig2)
+    
     
     if mod(i,2) ~= 0
-        color = 'r.';
+        color = 'r-';
     else
-        color = 'b.';
+        color = 'b-';
     end
-    xValFinal = snake.finalXVals;
-    yValFinal = snake.finalYVals;
-    xVal = snake.xVals;
-    yVal = snake.yVals;
-   
-    plot(xVal,yVal, color)
+    figure(fig2)
+    delete(snakeCont)
+    snakeCont = plot(snake.xVals,snake.yVals, color);
  
 end
 endEnergy = snake.totalEnergy;
