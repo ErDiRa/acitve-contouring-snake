@@ -4,8 +4,6 @@ classdef snakeModel
         alpha
         beta
         gamma
-        finalXVals
-        finalYVals
         xVals
         yVals
         energyVals
@@ -14,19 +12,18 @@ classdef snakeModel
         totalEnergyInit
         edgeImage
         energyImage
-        
     end
     
     methods(Static)
         
-        function snake = create(alpha,beta,gamma,xVals,yVals,imageData)
+        function snake = create(alpha,beta,gamma,xVals,yVals,imageData,useSobel,thresVal)
             snake = snakeModel;
             snake.alpha = alpha;
             snake.beta = beta;
             snake.gamma = gamma;
             snake.xVals = xVals;
             snake.yVals = yVals;
-            snake.edgeImage = snakeModel.prepareEdgeImage(imageData);
+            snake.edgeImage = snakeModel.prepareEdgeImage(imageData,useSobel,thresVal);
             [snake.energyValsInit, snake.totalEnergyInit ] = ...
                 snakeModel.calcInitEnergyVals(xVals,yVals,snake.edgeImage, snake.alpha,snake.beta,snake.gamma);
             snake.totalEnergy = snake.totalEnergyInit;
@@ -38,7 +35,7 @@ classdef snakeModel
     
     methods(Access = private, Static)
         
-        function edgeImage = prepareEdgeImage(imageData)
+        function edgeImage = prepareEdgeImage(imageData,useSobel,thresVal)
             %% Blurring
             %blurred_Image = imageOperators.gaussianFilter(imageData);
             blurred_Image = imageOperators.anisotropicFilter(imageData);
@@ -47,31 +44,35 @@ classdef snakeModel
             imshow(blurred_Image,[])
             title("Blurred Image")
 
-            %% Edge Detection
-            %edge_Image = imageOperators.detectEdgesLaplace(blurred_Image);
+            %% Sobel Edge Detection
             edge_Image = imageOperators.detectEdgesSobel(blurred_Image);
             subplot(2,3,2)
             imshow(uint8(edge_Image))
             title('Edges after Sobel (2nd order)')
-
-            %edge_Image = imageOperators.detectEdgesXY(edge_Image);
+            
+            edge_Image = imageOperators.performThresholding(edge_Image,thresVal);
             subplot(2,3,3)
-            imshow(edge_Image)
-            title('final edge detection (1.2nd Order xy, 2.1st Order xy')
-% 
-             canny_Image = imageOperators.cannyFilter(blurred_Image);
-             canny_Image_blurred = imageOperators.anisotropicFilter(canny_Image);
-             subplot(2,3,4)
-             imshow(canny_Image)
-             title('canny filtered')
+            imshow(uint8(edge_Image))
+            title('Edges after Sobel and Thres')
+            
+            %% Canny Edge Detection
+            canny_Image = imageOperators.cannyFilter(blurred_Image);
+            canny_Image_blurred = imageOperators.anisotropicFilter(canny_Image);
+            subplot(2,3,4)
+            imshow(canny_Image)
+            title('canny filtered and blurred')
 
             %% Inverting
-            %edgeImage = imcomplement(edge_Image);%if snake hits an edge potential gets zero
-            edgeImage = canny_Image_blurred;
+            if useSobel
+                edgeImage = edge_Image;
+            else
+                edgeImage = canny_Image_blurred;
+            end
+           
             subplot(2,3,5)
             imshow(edgeImage)
-            title('final edge Image after blurring')
-            %TODO: the edge image are forces maybe try to visualize that
+            title('final edge Image')
+        
          end 
         
         function [gradMagValues,gradMagDirection,gradMag] = calcGradientMagnitude(edgeImage,xVals,yVals)
@@ -79,6 +80,7 @@ classdef snakeModel
             gradMagValues = zeros(1,length(xVals));
             gradMagDirection = zeros(1, length(yVals));
             for i=1:length(xVals)
+               
                 xpos = round(xVals(i));
                 ypos = round(yVals(i));
                 gradMagValues(i) = gradMag(ypos,xpos);
@@ -263,7 +265,9 @@ classdef snakeModel
             for i=1:length(xVals)
                 xpos = round(xVals(i));
                 ypos = round(yVals(i));
-                
+                if ypos <= 0 || xpos <= 0
+                    break;
+                end
                 imageEnergyVals(i) = double((edgeImage(ypos,xpos)))^2;
             end
             
@@ -304,7 +308,7 @@ classdef snakeModel
          end
         
         function [newXVals,newYVals,energyVals,totalEnergy] = calcEnergyVals(xVals,yVals,oldXVals,oldYVals,...
-                totalEnergySnake,oldEnergyVals,edgeImage,alpha,beta,gamma)
+                oldEnergyVals,edgeImage,alpha,beta,gamma)
              
              [tensionValsNew, ~] = snakeModel.calcTension(xVals,yVals);
              [tensionValsOld, ~] = snakeModel.calcTension(oldXVals,oldYVals);
@@ -349,26 +353,6 @@ classdef snakeModel
                 %one
                 xVals(i) = oldXVals(i) + gradientEnergX(i)*stepSize;
                 yVals(i) = oldYVals(i) + gradientEnergY(i)*stepSize;
-% %                 startIdx = i; endIdx = n-i; if i < (n-1)/2
-% %                     startIdx = i; endIdx = n-i; [xInRange,yInRange] =
-% %                     snakeModel.withinRange(xVal,yVal,
-% %                     initXVals,initYVals,startIdx,endIdx,radius);
-% %                 else
-% %                     startIdx = n-i; endIdx = ; [xInRange,yInRange] =
-% %                     snakeModel.withinRange(xVal,yVal,
-% %                     initXVals,initYVals,endIdx,startIdx,radius);
-% %                 end if xInRange
-% %                     xVals(i) = xVal;
-% %                 else
-% %                     xVals(i) = oldXVals(i);
-% %                 end
-% %                 
-% %                 if yInRange
-% %                     yVals(i) = yVal;
-% %                 else
-% %                     yVals(i) = oldYVals(i);
-% %                 end
-                
             end
         end
        
@@ -417,16 +401,11 @@ classdef snakeModel
              
              [newXVals,newYVals] = snakeModel.calcNewXYVals(this.xVals,this.yVals, gradientEnergyX,gradientEnergyY,stepSize);
              [newXVals,newYVals,newEnergyVals,totalEnergyTmp] = snakeModel.calcEnergyVals(newXVals,newYVals,this.xVals,this.yVals,...
-                 this.totalEnergy,this.energyVals,this.edgeImage,this.alpha,this.beta,this.gamma);
+                 this.energyVals,this.edgeImage,this.alpha,this.beta,this.gamma);
             
+             %Set new values
              this.totalEnergy = totalEnergyTmp;
-             this.energyVals = newEnergyVals;
-             if totalEnergyTmp < this.totalEnergy
-                 this.totalEnergy = totalEnergyTmp;
-                 this.finalXVals = newXVals;
-                 this.finalYVals = newYVals;
-             end
-             
+             this.energyVals = newEnergyVals;             
              this.xVals = newXVals;
              this.yVals = newYVals;  
              
