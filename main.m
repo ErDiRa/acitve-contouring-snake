@@ -127,21 +127,22 @@ while runLoop
     
     
 end
-
+%% Plot snake energies during iterations
 endEnergy = snake.totalEnergy;
 figure(7)
 plot(1:length(snakeEnergies),snakeEnergies)
 
+%% Plot final snake
 fig8 = figure(8);
 imshow(input)
 figure(fig8)
 hold on,plot(snake.xVals,snake.yVals,'g-')
 title(["Final snake after ",num2str(iterationsteps), "iterations"])
-
+%% Plot Gradient
 figure(9)
 [rows,columns] = size(snakeXYVals);
 n = length(snakeXYVals{1,1});
- for i=1:columns-1
+for i=1:columns-1
      X = snakeXYVals{1,i};
      Y = snakeXYVals{2,i};
      X_next = snakeXYVals{1,i+1};
@@ -150,9 +151,13 @@ n = length(snakeXYVals{1,1});
      diffY = Y_next - Y;
      plot(X,Y),hold on
      quiver(X,Y,diffX,diffY,0,'color',[1 0 0]),hold on
-end
-
-
+ end
+ 
+ %% Final Segmentation
+ figure(10)
+ [M,xpol,ypol] = roipoly(input,snake.xVals,snake.yVals);
+ imshow(M);
+ title("Finale segmentation")
 
 
 
