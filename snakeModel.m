@@ -96,28 +96,6 @@ classdef snakeModel
             
         end
         
-        function tensionValue = calcTensionSingle(xVals,yVals)
-            v_prev = [xVals(1); yVals(1)];
-            v = [xVals(2); yVals(2)];
-            v_next = [xVals(3);yVals(3)];
-                    
-            deriveX = - 0.5*v_prev(1) + 0*v(1) + 0.5*v_next(1);
-            deriveY = - 0.5* v_prev(2) + 0*v(2) + 0.5*v_next(2);
-            tensionValue = (sqrt(deriveX^2 + deriveY^2))^2;
-        end
-        
-        function stiffnessValue = calcStiffnessSingle(xVals,yVals)
-             v_prev = [xVals(1); yVals(1)]; %because at index n is the same value as 1 (close circle)
-             v = [xVals(2); yVals(2)];
-             v_next = [xVals(3);yVals(3)];
-
-             %2nd derivative
-             deriveX = v_prev(1)  - 2*v(1) +  v_next(1);
-             deriveY = v_prev(2) - 2*v(2) + v_next(2);
-
-             stiffnessValue = (sqrt(deriveX^2 + deriveY^2))^2;
-        end   
-        
         function [secDerivX, secDerivY] = calcSecondDerivative(xVals,yVals)
            
              n = length(xVals);
@@ -395,7 +373,7 @@ classdef snakeModel
              %Gradient magnitude values of ImageEnergy (--> of edge image)
              [imageGradVals,~,gradMag] = snakeModel.calcGradientMagnitude(this.edgeImage, this.xVals, this.yVals);
              
-             [gradientEnergyX,gradientEnergyY] = snakeModel.calcGradientEnergies(secDerivX,secDerivY,... 
+             [gradientEnergyX,gradientEnergyY] = snakeModel.calcGradientEnergie(secDerivX,secDerivY,... 
                     fourthDerivX,fourthDerivY,imageGradVals, this.alpha, this.beta, this.gamma);  
              
              [newXVals,newYVals] = snakeModel.calcNewXYVals(this.xVals,this.yVals, gradientEnergyX,gradientEnergyY,stepSize, this.radius, this.xCenter,this.yCenter);
