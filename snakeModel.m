@@ -31,7 +31,7 @@ classdef snakeModel
             snake.yCenter = yCenter;
             snake.edgeImage = snakeModel.prepareEdgeImage(imageData,useSobel,thresVal);
             [snake.energyValsInit, snake.totalEnergyInit ] = ...
-                snakeModel.calcInitEnergyVals(xVals,yVals,snake.edgeImage, snake.alpha,snake.beta,snake.gamma);
+                snakeModel.calcEnergyVals(xVals,yVals,snake.edgeImage, snake.alpha,snake.beta,snake.gamma);
             snake.totalEnergy = snake.totalEnergyInit;
             snake.energyVals = snake.energyValsInit;
         end
@@ -313,56 +313,26 @@ classdef snakeModel
             
         end
         
-        function [energyVals,totalEnergy] = calcInitEnergyVals(xVals,yVals,edgeImage,alpha,beta,gamma)
+        
+        function [energyVals,totalEnergy] = calcEnergyVals(xVals,yVals,...
+                edgeImage,alpha,beta,gamma)
              
              [tensionValsNew, ~] = snakeModel.calcTension(xVals,yVals);
-  
+
              n = length(tensionValsNew(1,:));
-             
+           
              [stiffnessValsNew, ~] = snakeModel.calcStiffness(xVals, yVals);
+
              
              [edgePotentialsNew,~] = snakeModel.calcImageForces(xVals,yVals,edgeImage);
+  
              
              energyVals = zeros(1,n);
-             for i=1:n
-                 energyVals(i) = (alpha/2)*tensionValsNew(i) + (beta/2)*stiffnessValsNew(i) + (gamma/2)*edgePotentialsNew(i);
-             end
-             totalEnergy = sum(energyVals);
-             
-         end
-        
-        function [newXVals,newYVals,energyVals,totalEnergy] = calcEnergyVals(xVals,yVals,oldXVals,oldYVals,...
-                oldEnergyVals,edgeImage,alpha,beta,gamma)
-             
-             [tensionValsNew, ~] = snakeModel.calcTension(xVals,yVals);
-             [tensionValsOld, ~] = snakeModel.calcTension(oldXVals,oldYVals);
-             n = length(tensionValsNew(1,:));
-             newXVals = zeros(1,n);
-             newYVals = zeros(1,n);
-             
-             [stiffnessValsNew, ~] = snakeModel.calcStiffness(xVals, yVals);
-             [stiffnessValsOld, ~] = snakeModel.calcStiffness(oldXVals, oldYVals);
-             
-             [edgePotentialsNew,~] = snakeModel.calcImageForces(xVals,yVals,edgeImage);
-             [edgePotentialsOld,~] = snakeModel.calcImageForces(oldXVals,oldYVals,edgeImage);
-             
-             energyVals = oldEnergyVals;
              totalEnergy = 0;
              for i=1:n
                  energyValNew = (alpha/2)*tensionValsNew(i) + (beta/2)*stiffnessValsNew(i) + (gamma/2)*edgePotentialsNew(i);
-                 energyValOld = (alpha/2)*tensionValsOld(i) + (beta/2)*stiffnessValsOld(i) + (gamma/2)*edgePotentialsOld(i);
-                 
-                 if (energyValNew < energyValOld) 
-                     energyVals(i) = energyValNew;
-                     newXVals(i) = xVals(i);
-                     newYVals(i) = yVals(i);
-                     totalEnergy = totalEnergy + energyValNew;
-                 else
-                     energyVals(i) = energyValOld;
-                     newXVals(i) = oldXVals(i);
-                     newYVals(i) = oldYVals(i);
-                     totalEnergy = totalEnergy + energyValOld;
-                 end
+                 energyVals(i) = energyValNew;
+                 totalEnergy = totalEnergy + energyValNew;     
              end
              
          end
@@ -429,8 +399,8 @@ classdef snakeModel
                     fourthDerivX,fourthDerivY,imageGradVals, this.alpha, this.beta, this.gamma);  
              
              [newXVals,newYVals] = snakeModel.calcNewXYVals(this.xVals,this.yVals, gradientEnergyX,gradientEnergyY,stepSize, this.radius, this.xCenter,this.yCenter);
-             [newXVals,newYVals,newEnergyVals,totalEnergyTmp] = snakeModel.calcEnergyVals(newXVals,newYVals,this.xVals,this.yVals,...
-                 this.energyVals,this.edgeImage,this.alpha,this.beta,this.gamma);
+             [newEnergyVals,totalEnergyTmp] = snakeModel.calcEnergyVals(newXVals,newYVals,...
+                 this.edgeImage,this.alpha,this.beta,this.gamma);
             
              %Set new values
              this.totalEnergy = totalEnergyTmp;
