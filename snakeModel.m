@@ -12,17 +12,23 @@ classdef snakeModel
         totalEnergyInit
         edgeImage
         energyImage
+        radius
+        xCenter
+        yCenter
     end
     
     methods(Static)
         
-        function snake = create(alpha,beta,gamma,xVals,yVals,imageData,useSobel,thresVal)
+        function snake = create(alpha,beta,gamma,xVals,yVals,imageData,useSobel,thresVal,radius,xCenter,yCenter)
             snake = snakeModel;
             snake.alpha = alpha;
             snake.beta = beta;
             snake.gamma = gamma;
             snake.xVals = xVals;
             snake.yVals = yVals;
+            snake.radius = radius;
+            snake.xCenter = xCenter;
+            snake.yCenter = yCenter;
             snake.edgeImage = snakeModel.prepareEdgeImage(imageData,useSobel,thresVal);
             [snake.energyValsInit, snake.totalEnergyInit ] = ...
                 snakeModel.calcInitEnergyVals(xVals,yVals,snake.edgeImage, snake.alpha,snake.beta,snake.gamma);
@@ -285,10 +291,8 @@ classdef snakeModel
             for i=1:length(xVals)
                 xpos = round(xVals(i));
                 ypos = round(yVals(i));
-                if ypos <= 0 || xpos <= 0
-                    break;
-                end
                 imageEnergyVals(i) = double((edgeImage(ypos,xpos)))^2;
+                 
             end
             
             imageEnergyTotal = sum(imageEnergyVals);
@@ -363,20 +367,40 @@ classdef snakeModel
              
          end
         
-        function [xVals,yVals] = calcNewXYVals(oldXVals, oldYVals,gradientEnergX, gradientEnergY,stepSize)
+        function [xVals,yVals] = calcNewXYVals(oldXVals, oldYVals,gradientEnergX, gradientEnergY,stepSize,radius,xCenter,yCenter)
             n = length(oldXVals);
             xVals = zeros(1,n);
             yVals = zeros(1,n);
             
             for i=1:n
-                xVals(i) = oldXVals(i) + gradientEnergX(i)*stepSize;
-                yVals(i) = oldYVals(i) + gradientEnergY(i)*stepSize;
+                xVal = oldXVals(i) + gradientEnergX(i)*stepSize;
+                yVal = oldYVals(i) + gradientEnergY(i)*stepSize;
+                
+                if snakeModel.isWithinCircle(radius,xCenter,yCenter,xVal,yVal)
+                    xVals(i) = xVal;
+                    yVals(i) = yVal;
+                else
+                    xVals(i) = oldXVals(i);
+                    yVals(i) = oldYVals(i);
+                end
+                
             end
         end
                 
-        
+        function withinCircle = isWithinCircle(radius,xCenter,yCenter,xVal,yVal)
+            % Function to check if new values are within the init
+            % circle/snake
+            dist = sqrt(( xVal - xCenter)^2 + (yVal - yCenter)^2);
+            if dist < radius
+                withinCircle = true;
+            else
+                withinCircle = false;
+            end
+            
+        end
     end
     
+        
    
     
     methods (Access= public)
@@ -391,8 +415,6 @@ classdef snakeModel
              %           Gradient magnitude values of the Image Energy
              %           (edge image)
              
-             
-        
              %% Calc Gradient of EnergyFunc
              %2nd derivative of length
              [secDerivX, secDerivY] = snakeModel.calcSecondDerivative(this.xVals,this.yVals);
@@ -406,7 +428,7 @@ classdef snakeModel
              [gradientEnergyX,gradientEnergyY] = snakeModel.calcGradientEnergies(secDerivX,secDerivY,... 
                     fourthDerivX,fourthDerivY,imageGradVals, this.alpha, this.beta, this.gamma);  
              
-             [newXVals,newYVals] = snakeModel.calcNewXYVals(this.xVals,this.yVals, gradientEnergyX,gradientEnergyY,stepSize);
+             [newXVals,newYVals] = snakeModel.calcNewXYVals(this.xVals,this.yVals, gradientEnergyX,gradientEnergyY,stepSize, this.radius, this.xCenter,this.yCenter);
              [newXVals,newYVals,newEnergyVals,totalEnergyTmp] = snakeModel.calcEnergyVals(newXVals,newYVals,this.xVals,this.yVals,...
                  this.energyVals,this.edgeImage,this.alpha,this.beta,this.gamma);
             

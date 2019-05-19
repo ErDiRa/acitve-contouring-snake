@@ -3,26 +3,26 @@ close all; clear all; clc
 %% Constants
 %Image operations
 alphaUnsharp = 10;
-stepSize = 50; %amount of starting point of snake
+stepSize = 25; %amount of starting point of snake
 
 %snake model
 alpha = 1.0;
-beta = 0.2;
+beta = 0.0;
 gamma = -100;
 epsilon = 0.02;
-deltaT = 1.0;
+deltaT = 0.2;
 
 %EdgeDetection
 useSobel = true; %for CannyFilter set to false
 thresHoldVal = 150; %for sobel Filter
 
 %% Input
-%input_img = imread('data/simpleObjects.jpg');
+input_img = imread('data/simpleObjects.jpg');
 %input_img = imread('tire.tif');
 %input_img = imread('eight.tif');
 %input_img = imread('AT3_1m4_07.tif'); %use the sobel filter; threshold:100
 %input_img = imread('hands1.jpg');
-input_img = imread('toyobjects.png');
+%input_img = imread('toyobjects.png');
 %input_img = imread('pillsetc.png'); %sobel filter; threshold:150 --> good example
 subplot(3,3,1)
 imshow(input_img)
@@ -60,7 +60,7 @@ hold on,plot(xCenter, yCenter,'g*')
 hold on, plot(xVals_opt,yVals_opt,'g-')
 %% Initialise snake model
 % !! xVals are the columns and yVals are the rows in the image!!!
-snake = snakeModel.create(alpha,beta,gamma,xVals_opt,yVals_opt, input_med,useSobel,thresHoldVal);
+snake = snakeModel.create(alpha,beta,gamma,xVals_opt,yVals_opt, input_med,useSobel,thresHoldVal, initRadiusSnake,xCenter,yCenter);
 image = snake.edgeImage;
 
 figure(4), imshow(snake.edgeImage)

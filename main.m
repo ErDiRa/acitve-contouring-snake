@@ -3,11 +3,14 @@ close all; clear all; clc
 %% Constants
 %Image operations
 alphaUnsharp = 10;
+stepSize = 25; %amount of starting point of snake
 
 %snake model
 alpha = 1.0;
-beta = 0.00002;
-gamma = -10;
+beta = 0.2;
+gamma = -100;
+epsilon = 0.0002;
+deltaT = 0.2;
 
 %EdgeDetection
 useSobel = true; %for CannyFilter set to false
@@ -65,55 +68,55 @@ title('Snake Input Image Median Filter')
 [x,y] = getline(fig2);
 [M,xpol,ypol] = roipoly(input_medianFil,x,y);
 
-hold on, plot(xpol,ypol)
-
-% estimate centerpoint and radius of given user input
-[xCenter,yCenter] = snakeHelper.calcCenterOfPoints(xpol,ypol);
-plot(xCenter,yCenter,'r.'), hold on
-
-radius = snakeHelper.estimateRadius(xCenter,yCenter,xpol,ypol);
-
-% Optimise circle function given the polygon input of user
-[optCircleVals, R] = snakeHelper.optimiseCircleParams(xCenter,yCenter,radius,xpol,ypol);
+[xVals_opt,yVals_opt,initRadiusSnake,xCenter,yCenter] = snakeHelper.calcInitialSnakeVals(xpol,ypol,stepSize);
 
 % plot optimized center point
-plot(optCircleVals(1), optCircleVals(2),'g*'), hold on
+hold on,plot(xCenter, yCenter,'g*')
 
-% plot optimzed circel of user input
-stepSize = 50;
 % This are the initial values for the snake, estimated from the user input
-[xVals_opt, yVals_opt] = snakeHelper.calcCirclePlotVals(optCircleVals(1), optCircleVals(2), optCircleVals(3),stepSize);
-plot(xVals_opt,yVals_opt,'g-')
+hold on, plot(xVals_opt,yVals_opt,'g-')
 
-%% Initialize snake model
+%% Initialise snake model
 % !! xVals are the columns and yVals are the rows in the image!!!
-snake = snakeModel.create(alpha,beta,gamma,xVals_opt,yVals_opt, input_medianFil,useSobel,thresHoldVal);
+snake = snakeModel.create(alpha,beta,gamma,xVals_opt,yVals_opt, input_medianFil,useSobel,thresHoldVal,initRadiusSnake,xCenter,yCenter);
 image = snake.edgeImage;
-[rows,columns] = size(input_medianFil);
+
 figure(4), imshow(snake.edgeImage)
 
 snakeEnergImg = snake.energyImage;
 
-figure(5)
-mesh(1:columns,1:rows,snakeEnergImg)
 
-figure(6)
-plot3(xVals_opt, yVals_opt, snake.energyValsInit)
-
-
+%% Minimize snake energy
 initEnergy = snake.totalEnergyInit;
-iterationsteps = 500;
-snakeEnergies = zeros(1,iterationsteps);
+iterationsteps = 1;
+snakeEnergies = [];
+snakeXYVals = {};
 figure(fig2)
 color = 'b-';
 snakeCont = plot(snake.xVals,snake.yVals, color);
-for i=1:iterationsteps
+prevEnergy = snake.totalEnergy;
+runLoop = true;
+cellIndex = 1;
+while runLoop 
+   
+    snake = snake.minimizeEnergy(deltaT);
+    snakeEnergies(iterationsteps) = snake.totalEnergy;
+    if mod(iterationsteps,10) == 0
+        snakeXYVals{1, cellIndex} = snake.xVals;
+        snakeXYVals{2, cellIndex} = snake.yVals;
+        cellIndex = cellIndex + 1;
+    end
     
-    snake = snake.minimizeEnergy(0.2);
-    snakeEnergies(i) = snake.totalEnergy;
+    iterationsteps = iterationsteps + 1;
+    actualEnergy = snake.totalEnergy;
+    if abs(prevEnergy-actualEnergy) > epsilon
+        runLoop = true;
+        prevEnergy = actualEnergy;  
+    else
+        runLoop = false;
+    end
     
-    
-    if mod(i,2) ~= 0
+    if mod(iterationsteps,2) ~= 0
         color = 'r-';
     else
         color = 'b-';
@@ -121,12 +124,33 @@ for i=1:iterationsteps
     figure(fig2)
     delete(snakeCont)
     snakeCont = plot(snake.xVals,snake.yVals, color);
- 
+    
+    
 end
+
 endEnergy = snake.totalEnergy;
 figure(7)
-plot(1:iterationsteps,snakeEnergies)
+plot(1:length(snakeEnergies),snakeEnergies)
 
+fig8 = figure(8);
+imshow(input)
+figure(fig8)
+hold on,plot(snake.xVals,snake.yVals,'g-')
+title(["Final snake after ",num2str(iterationsteps), "iterations"])
+
+figure(9)
+[rows,columns] = size(snakeXYVals);
+n = length(snakeXYVals{1,1});
+ for i=1:columns-1
+     X = snakeXYVals{1,i};
+     Y = snakeXYVals{2,i};
+     X_next = snakeXYVals{1,i+1};
+     Y_next = snakeXYVals{2,i+1};
+     diffX = X_next - X;
+     diffY = Y_next - Y;
+     plot(X,Y),hold on
+     quiver(X,Y,diffX,diffY,0,'color',[1 0 0]),hold on
+end
 
 
 
