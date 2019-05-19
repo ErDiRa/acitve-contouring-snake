@@ -28,7 +28,6 @@ classdef snakeModel
                 snakeModel.calcInitEnergyVals(xVals,yVals,snake.edgeImage, snake.alpha,snake.beta,snake.gamma);
             snake.totalEnergy = snake.totalEnergyInit;
             snake.energyVals = snake.energyValsInit;
-            snake.energyImage = snakeModel.calcEnergyValsOfImage(imageData,snake.edgeImage);
         end
         
     end
@@ -90,6 +89,28 @@ classdef snakeModel
             gradMagValues = uint8(gradMagValues);
             
         end
+        
+        function tensionValue = calcTensionSingle(xVals,yVals)
+            v_prev = [xVals(1); yVals(1)];
+            v = [xVals(2); yVals(2)];
+            v_next = [xVals(3);yVals(3)];
+                    
+            deriveX = - 0.5*v_prev(1) + 0*v(1) + 0.5*v_next(1);
+            deriveY = - 0.5* v_prev(2) + 0*v(2) + 0.5*v_next(2);
+            tensionValue = (sqrt(deriveX^2 + deriveY^2))^2;
+        end
+        
+        function stiffnessValue = calcStiffnessSingle(xVals,yVals)
+             v_prev = [xVals(1); yVals(1)]; %because at index n is the same value as 1 (close circle)
+             v = [xVals(2); yVals(2)];
+             v_next = [xVals(3);yVals(3)];
+
+             %2nd derivative
+             deriveX = v_prev(1)  - 2*v(1) +  v_next(1);
+             deriveY = v_prev(2) - 2*v(2) + v_next(2);
+
+             stiffnessValue = (sqrt(deriveX^2 + deriveY^2))^2;
+        end   
         
         function [secDerivX, secDerivY] = calcSecondDerivative(xVals,yVals)
            
@@ -299,10 +320,10 @@ classdef snakeModel
              [edgePotentialsNew,~] = snakeModel.calcImageForces(xVals,yVals,edgeImage);
              
              energyVals = zeros(1,n);
-             totalEnergy = 0;
              for i=1:n
                  energyVals(i) = (alpha/2)*tensionValsNew(i) + (beta/2)*stiffnessValsNew(i) + (gamma/2)*edgePotentialsNew(i);
              end
+             totalEnergy = sum(energyVals);
              
          end
         
@@ -348,24 +369,11 @@ classdef snakeModel
             yVals = zeros(1,n);
             
             for i=1:n
-                %check if new xVal is within range otherwise take the old
-                %one
                 xVals(i) = oldXVals(i) + gradientEnergX(i)*stepSize;
                 yVals(i) = oldYVals(i) + gradientEnergY(i)*stepSize;
             end
         end
-       
-        function energyVals = calcEnergyValsOfImage(imageData,edgeImage)
-            [rows,columns] = size(imageData);
-            energyVals = zeros(rows,columns);
-            for i=1:rows
-                for j=1:columns
-                    energyVals(i,j) = double((edgeImage(i,j)))^2;
-                end
-            end
-            
-            
-        end
+                
         
     end
     
