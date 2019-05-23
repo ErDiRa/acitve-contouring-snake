@@ -4,7 +4,7 @@ close all; clear all; clc
 % unfortunately it was not possible in given time to optimise the snake
 % to detect the shown tumor in the example image
 % --> needs improvement so that a snake does not get stuck on an edge
-% around the tumor
+% around the tumorr
 
 %% Constants
 %Image operations
@@ -23,7 +23,7 @@ useSobel = true; %for CannyFilter set to false
 thresHoldVal = 220; %for sobel Filter
     
 %% Read input image
-I = dicomread('./data/ElasticRadExampleData/BrainX/20061201/IM-0001-0009.dcm');
+I = dicomread('./data/IM-0001-0009.dcm');
 input = imageOperators.convertGreyValsToInt8(I);
 
 figure(1)
