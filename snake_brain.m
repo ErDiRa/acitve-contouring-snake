@@ -1,5 +1,11 @@
 close all; clear all; clc
 
+%% Main method to run the snake on a DICOM image (MRI)
+% unfortunately it was not possible in given time to optimise the snake
+% to detect the shown tumor in the example image
+% --> needs improvement so that a snake does not get stuck on an edge
+% around the tumor
+
 %% Constants
 %Image operations
 alphaUnsharp = 10;
@@ -43,7 +49,6 @@ title('Snake Input image sharpened')
 gmin = 50;
 gmax = 120;
 maxPixelVal = 255;
-%input_eq = adapthisteq(input_sharpened); %Histogram equalisation CLAHE
 input_win = imageOperators.performWindowing(input_sharpened,gmin,gmax,maxPixelVal);
 % figure
 % imhist(input_win,65)

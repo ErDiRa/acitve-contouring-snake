@@ -3,7 +3,7 @@ classdef imageOperators
     methods(Static)
         
         function res = gaussianFilter(imageData)
-            sig = 1; %round(std2(imageData)); 
+            sig = 1; 
             siz = 4*sig + 1;
             hG = fspecial('gaussian', siz, sig);
             res = uint8(conv2(imageData, hG, 'same'));

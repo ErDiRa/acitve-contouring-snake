@@ -1,5 +1,5 @@
 classdef snakeHelper
-    %SNAKEHELPER contains functions to help initializing snake
+    % SNAKEHELPER contains functions to help initializing snake
    
     methods(Static)
         
@@ -12,7 +12,7 @@ classdef snakeHelper
             % Optimise circle function given the polygon input of user
             optCircleVals = snakeHelper.optimiseCircleParams(xCenterPol,yCenterPol,radius,xpol,ypol);
 
-            % optimized center point
+            % optimized center point and radius
             xCenter = optCircleVals(1);
             yCenter = optCircleVals(2);
             radiusSnake = optCircleVals(3);
@@ -23,7 +23,7 @@ classdef snakeHelper
         end
       
         function [xCenter,yCenter] = calcCenterOfPoints(xData,yData)
-            %estimates center for fit of circular function
+            %estimates center to fit of circular function
             xCenter = mean(xData);
             yCenter = mean(yData);
         end
@@ -60,6 +60,8 @@ classdef snakeHelper
 
         function [xVals, yVals] = calcCirclePlotVals(x0,y0, r, steps)
             %using parameter form
+            %function uses optimized parameters results of
+            %optimiseCircleParams() function
             s = 0:pi/steps:2*pi;
 
             xVals = round(r * cos(s) + x0);

@@ -1,17 +1,25 @@
 classdef snakeModel
-    
+    % link for numerical differentiation: 
+    % https://www.sphenisc.com/doku.php/software/algo/finitedifference
+    % used main literature:
+    % EVERYTHING YOU ALWAYS WANTED TO KNOW ABOUT SNAKES 
+    % (BUT WERE AFRAID TO ASK) Jim Ivins  & John Porrill (in pdf dir)
     properties
+        %Snake parameters
         alpha
         beta
         gamma
+        %Contour coordinates
         xVals
         yVals
+        %eEnergy vals of snake
         energyVals
         totalEnergy
         energyValsInit
         totalEnergyInit
         edgeImage
         energyImage
+        %Values of init snake to restrict further calc points
         radius
         xCenter
         yCenter
@@ -20,6 +28,7 @@ classdef snakeModel
     methods(Static)
         
         function snake = create(alpha,beta,gamma,xVals,yVals,imageData,useSobel,thresVal,radius,xCenter,yCenter)
+            % Initialises snake model
             snake = snakeModel;
             snake.alpha = alpha;
             snake.beta = beta;
@@ -39,10 +48,16 @@ classdef snakeModel
     end
     
     methods(Access = private, Static)
+        % Block contains functions to calc all needed values for the snake
         
         function edgeImage = prepareEdgeImage(imageData,useSobel,thresVal)
+            % function uses either Sobel or Canny Filter to detect the
+            % edges
+            % Canny Filter needs more optimisation to ignore unnecessary
+            % edges (thresholding)
             %% Blurring
             %blurred_Image = imageOperators.gaussianFilter(imageData);
+            % use a anisotropicFilter to conserve edges (better then gauss)
             blurred_Image = imageOperators.anisotropicFilter(imageData);
             figure(3)
             subplot(2,3,1)
@@ -81,12 +96,16 @@ classdef snakeModel
          end 
         
         function [gradMagValues,gradMagDirection,gradMag] = calcGradientMagnitude(edgeImage,xVals,yVals)
+            % calcs gradient magnitude of edge image
+            % needed to calc gradient vals
             [gradMag, gradMagDir] = imgradient(edgeImage);
             gradMagValues = zeros(1,length(xVals));
             gradMagDirection = zeros(1, length(yVals));
             for i=1:length(xVals)
                 xpos = round(xVals(i));
                 ypos = round(yVals(i));
+                %!! xVals are columns and yVals are the rows !!, due to
+                %getline() function use in snake_simple.m or snake_brain.m
                 gradMagValues(i) = gradMag(ypos,xpos);
                 gradMagDirection = gradMagDir(ypos,xpos);
             end
@@ -97,19 +116,21 @@ classdef snakeModel
         end
         
         function [secDerivX, secDerivY] = calcSecondDerivative(xVals,yVals)
-           
+             % calcs second derivatives of  x and y vals of snake
+             % needed to calc gradient vals
              n = length(xVals);
              secDerivX = zeros(1,n);
              secDerivY = zeros(1,n);
              for i = 1:n
-                 
+                  % needs Index checking because we have a circular closes
+                 % snake
                  if i == 1
-                    v_prev = [xVals(n-1); yVals(n-1)]; %because at index n is the same value as 1 (close circle)
+                    v_prev = [xVals(n-1); yVals(n-1)]; 
                     v = [xVals(i); yVals(i)];
                     v_next = [xVals(i+1);yVals(i+1)];
 
                     %2nd derivative
-                    secDerivX(i) = v_prev(1) - 2*v(1) + v_next(1); %%times stepsize?times stepsize?
+                    secDerivX(i) = v_prev(1) - 2*v(1) + v_next(1);
                     secDerivY(i) = v_prev(2) - 2*v(2) + v_next(2);
                  
                  elseif i < n
@@ -130,14 +151,17 @@ classdef snakeModel
          end
          
         function [fourthDerivX, fourthDerivY] = calcFourthDerivative(xVals,yVals)
+             % calcs fourth derivatitves of x and y vals of snake 
+             % needed to calc gradient vals
              n = length(xVals);
              fourthDerivX = zeros(1,n);
              fourthDerivY = zeros(1,n);
              for i = 1:n
-                 
+                 % needs Index checking because we have a circular closes
+                 % snake
                  if i == 1
                     v_pprev = [xVals(n-2); yVals(n-2)];
-                    v_prev = [xVals(n-1); yVals(n-1)]; %because at index n is the same value as 1 (close circle)
+                    v_prev = [xVals(n-1); yVals(n-1)]; 
                     v = [xVals(i); yVals(i)];
                     v_next = [xVals(i+1);yVals(i+1)];
                     v_nnext = [xVals(i+2);yVals(i+2)];
@@ -148,7 +172,7 @@ classdef snakeModel
                     
                  elseif i == 2
                     v_pprev = [xVals(n-1); yVals(n-1)];
-                    v_prev = [xVals(1); yVals(1)]; %because at index n is the same value as 1 (close circle)
+                    v_prev = [xVals(1); yVals(1)]; 
                     v = [xVals(i); yVals(i)];
                     v_next = [xVals(i+1);yVals(i+1)];
                     v_nnext = [xVals(i+2);yVals(i+2)];
@@ -195,7 +219,8 @@ classdef snakeModel
             tensionValues = zeros(1,n);
                 
             for i=1:n
-                
+                 % needs index checks: because we have a circular closed
+                 % snake
                 if i == 1
                     v_prev = [xVals(n-1); yVals(n-1)];
                     v = [xVals(i); yVals(i)];
@@ -215,7 +240,7 @@ classdef snakeModel
                     deriveY = - 0.5* v_prev(2) + 0*v(2) + 0.5*v_next(2);
 
                     tensionValues(i) = (sqrt(deriveX^2 + deriveY^2))^2;
-                elseif i ==n
+                elseif i == n
                     tensionValues(i) = tensionValues(1);
                 end
                 
@@ -230,7 +255,8 @@ classdef snakeModel
              stiffnessVals = zeros(1, n);
              
              for i = 1:n
-                 
+                 % needs Index checks: because we have a circular closed
+                 % snake
                  if i == 1
                     v_prev = [xVals(n-1); yVals(n-1)]; %because at index n is the same value as 1 (close circle)
                     v = [xVals(i); yVals(i)];
@@ -254,7 +280,7 @@ classdef snakeModel
 
                     stiffnessVals(i) = (sqrt(deriveX^2 + deriveY^2))^2;
                 
-                else
+                 else
                     stiffnessVals(i) = stiffnessVals(1);
                     
                 end
@@ -264,11 +290,13 @@ classdef snakeModel
          end
          
         function [imageEnergyVals,imageEnergyTotal] = calcImageForces(xVals,yVals,edgeImage)
-            %%return image values of edge detected image
+            % return image values of edge detected image
             imageEnergyVals = zeros(1, length(xVals));
             for i=1:length(xVals)
                 xpos = round(xVals(i));
                 ypos = round(yVals(i));
+                %!! xVals are columns and yVals are the rows !!, due to
+                %getline() function use in snake_simple.m or snake_brain.m
                 imageEnergyVals(i) = double((edgeImage(ypos,xpos)))^2;
                  
             end
@@ -276,16 +304,16 @@ classdef snakeModel
             imageEnergyTotal = sum(imageEnergyVals);
         end
         
-        function [gradientEnergyX,gradientEnergyY] = calcGradientEnergies(secDerivX,secDerivY, fourthDerivX,...
+        function [gradientEnergyX,gradientEnergyY] = calcGradientVals(secDerivX,secDerivY, fourthDerivX,...
                 fourthDerivY,imageGradVals,alpha,beta,gamma)
-            
+            % calculates the gradient values for x and y
             n = length(secDerivX);
             gradientEnergyX = zeros(1,n);
             gradientEnergyY = zeros(1,n);
             
             for i=1:n
-                gradientEnergyX(i) = alpha*secDerivX(i) + beta*fourthDerivX(i) + gamma*double(imageGradVals(i));
-                gradientEnergyY(i) = alpha*secDerivY(i) + beta*fourthDerivY(i) + gamma*double(imageGradVals(i));
+                gradientEnergyX(i) = alpha*secDerivX(i) - beta*fourthDerivX(i) - gamma*double(imageGradVals(i));
+                gradientEnergyY(i) = alpha*secDerivY(i) - beta*fourthDerivY(i) - gamma*double(imageGradVals(i));
             end
             
             
@@ -294,7 +322,8 @@ classdef snakeModel
         
         function [energyVals,totalEnergy] = calcEnergyVals(xVals,yVals,...
                 edgeImage,alpha,beta,gamma)
-             
+             % function calcs total energy and energy for each points of
+             % the snake
              [tensionValsNew, ~] = snakeModel.calcTension(xVals,yVals);
 
              n = length(tensionValsNew(1,:));
@@ -310,7 +339,7 @@ classdef snakeModel
              for i=1:n
                  energyValNew = (alpha/2)*tensionValsNew(i) + (beta/2)*stiffnessValsNew(i) + (gamma/2)*edgePotentialsNew(i);
                  energyVals(i) = energyValNew;
-                 totalEnergy = totalEnergy + energyValNew;     
+                 totalEnergy = totalEnergy + energyValNew; 
              end
              
          end
@@ -337,7 +366,7 @@ classdef snakeModel
                 
         function withinCircle = isWithinCircle(radius,xCenter,yCenter,xVal,yVal)
             % Function to check if new values are within the init
-            % circle/snake
+            % circle/snake to prevent values outside of the image range
             dist = sqrt(( xVal - xCenter)^2 + (yVal - yCenter)^2);
             if dist < radius
                 withinCircle = true;
@@ -348,23 +377,18 @@ classdef snakeModel
         end
     end
     
-        
-   
-    
     methods (Access= public)
         
          function [this,gradMag,newXVals,newYVals] = minimizeEnergy(this,stepSize)
-             % therefore we need to derive the energy function
-             % https://en.wikipedia.org/wiki/Finite_difference use finite
-             % difference to get the derivatives
-             % necessary: 
-             %           2nd derivative of the length
-             %           4th derivative of the stiffness
-             %           Gradient magnitude values of the Image Energy
-             %           (edge image)
+             % function to minimize the snakes energy
+             %  - calcs all needed derivatives and gradient Magnitude of
+             %    edge image
+             %  - calcs the gradient values
+             %  - calcs the new x and y values for the snake contour
+             %  - calcs new energy of snake
              
              %% Calc Gradient of EnergyFunc
-             %2nd derivative of length
+             %2nd derivative of length/tension
              [secDerivX, secDerivY] = snakeModel.calcSecondDerivative(this.xVals,this.yVals);
              
              %4th derivative of stiffness
@@ -373,10 +397,14 @@ classdef snakeModel
              %Gradient magnitude values of ImageEnergy (--> of edge image)
              [imageGradVals,~,gradMag] = snakeModel.calcGradientMagnitude(this.edgeImage, this.xVals, this.yVals);
              
-             [gradientEnergyX,gradientEnergyY] = snakeModel.calcGradientEnergie(secDerivX,secDerivY,... 
+             %new gradient values
+             [gradientEnergyX,gradientEnergyY] = snakeModel.calcGradientVals(secDerivX,secDerivY,... 
                     fourthDerivX,fourthDerivY,imageGradVals, this.alpha, this.beta, this.gamma);  
-             
+                
+             %new x,y coordinates
              [newXVals,newYVals] = snakeModel.calcNewXYVals(this.xVals,this.yVals, gradientEnergyX,gradientEnergyY,stepSize, this.radius, this.xCenter,this.yCenter);
+             
+             %new energy of snake
              [newEnergyVals,totalEnergyTmp] = snakeModel.calcEnergyVals(newXVals,newYVals,...
                  this.edgeImage,this.alpha,this.beta,this.gamma);
             
