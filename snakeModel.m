@@ -1,4 +1,5 @@
 classdef snakeModel
+    % Author: Stefan Karlin
     % link for numerical differentiation: 
     % https://www.sphenisc.com/doku.php/software/algo/finitedifference
     % used main literature:
